@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alina's TKAM Ultimate 70-Question Master Review</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --correct-bg: #d4edda;
+            --correct-border: #28a745;
+            --correct-text: #155724;
+            --wrong-bg: #f8d7da;
+            --wrong-border: #dc3545;
+            --wrong-text: #721c24;
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            padding-bottom: 80px;
+        }
+        
+        /* 顶部悬浮进度条和计分板 */
+        .sticky-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--card-bg);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 1000;
+            padding: 15px 0;
+        }
+        .header-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .header-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            font-size: 1.1em;
+            color: var(--secondary);
+            margin-bottom: 8px;
+        }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            height: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--secondary);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* 页面主体 */
+        .main-container {
+            max-width: 900px;
+            margin: 140px auto 40px auto; /* 为顶部悬浮留出空间 */
+            padding: 0 20px;
+        }
+        .intro-text {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+
+        /* 题目卡片 */
+        .question-card {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.05);
+            margin-bottom: 25px;
+            border-left: 5px solid var(--secondary);
+            transition: transform 0.2s;
+        }
+        .question-card:hover {
+            transform: translateY(-2px);
+        }
+        .question-title {
+            font-size: 1.25em;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        .options-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .option {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.05em;
+        }
+        .option:hover:not(.disabled) {
+            background-color: #e2e6ea;
+            border-color: #adb5bd;
+        }
+        .option.correct {
+            background-color: var(--correct-bg) !important;
+            border-color: var(--correct-border) !important;
+            color: var(--correct-text);
+            font-weight: bold;
+        }
+        .option.wrong {
+            background-color: var(--wrong-bg) !important;
+            border-color: var(--wrong-border) !important;
+            color: var(--wrong-text);
+        }
+        .option.disabled {
+            pointer-events: none;
+        }
+        .option.faded {
+            opacity: 0.6;
+        }
+
+        /* 解析区域 */
+        .explanation-box {
+            display: none;
+            margin-top: 20px;
+            padding: 18px;
+            border-radius: 8px;
+            font-size: 1.05em;
+            background-color: #eef2f5;
+            border-left: 4px solid var(--primary);
+            animation: slideDown 0.4s ease forwards;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 完卷提示 */
+        .score-screen {
+            display: none;
+            background-color: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-top: 40px;
+            border: 3px solid var(--correct-border);
+        }
+        .score-screen h2 {
+            color: var(--primary);
+            font-size: 2.2em;
+            margin-top: 0;
+        }
+        .score-screen p {
+            font-size: 1.3em;
+            color: #555;
+            margin: 20px 0;
+        }
+        .restart-btn {
+            padding: 15px 30px;
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2em;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .restart-btn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+
+<!-- 悬浮顶部 -->
+<div class="sticky-header">
+    <div class="header-content">
+        <div class="header-title">Alina's TKAM 70-Question Master Review</div>
+        <div class="status-bar">
+            <span id="progress-text">Progress: 0 / 70</span>
+            <span id="score-text">Score: 0</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 主体内容 -->
+<div class="main-container">
+    <p class="intro-text">Scroll through all 70 questions. Click an option to grade instantly and view the explanation.</p>
+    
+    <div id="questions-container">
+        <!-- Questions will be injected here by JS -->
+    </div>
+
+    <!-- 底部完卷总结区 -->
+    <div class="score-screen" id="score-screen">
+        <h2>🎉 Master Review Complete, Alina!</h2>
+        <p id="final-score-text"></p>
+        <p style="color: #7f8c8d; font-style: italic;">"You never really understand a person until you consider things from his point of view..." - Atticus Finch</p>
+        <button class="restart-btn" onclick="window.scrollTo(0,0); location.reload();">Restart Practice</button>
+    </div>
+</div>
+
+<script>
+    const qData = [
+        // --- GRAMMAR (1-6) ---
+        {
+            q: "1. Grammar: What is the definition of 'Degrees of Comparison'?",
+            o: ["Using two negative words when one is sufficient.", "Changing the form of adjectives or adverbs to describe things or activities according to a certain comparison level.", "Capitalizing the first word in a sentence.", "Using a period in a declarative sentence."],
+            a: 1,
+            e: "Degrees of Comparison means to change the form of adjectives or adverbs to describe things or activities according to a certain comparison level."
+        },
+        {
+            q: "2. Grammar: Choose the correct form: 'Of the three sisters, Maria is the _______.'",
+            o: ["tall", "taller", "tallest", "most tall"],
+            a: 2,
+            e: "When comparing three or more things, use the superlative form 'tallest'."
+        },
+        {
+            q: "3. Grammar: How should you correct the double negative: 'We don’t have no library books.'",
+            o: ["We doesn't have no library books.", "We have no library books. (Or: We don't have any library books.)", "We haven't no library books.", "We don't have library books none."],
+            a: 1,
+            e: "In a double negative, two negative words are used when one is sufficient. The correction removes it: 'We have no library books' OR 'We don’t have any library books'."
+        },
+        {
+            q: "4. Grammar: Which of the following correctly follows capitalization rules?",
+            o: ["the dog ate cheerios from the floor.", "As we were flying over the grand canyon, there was turbulence.", "My favorite book this year was Lord of the Flies.", "you need to bring your chrome book."],
+            a: 2,
+            e: "Proper nouns and titles must be capitalized. 'Lord of the Flies' correctly capitalizes the title."
+        },
+        {
+            q: "5. Grammar: Identify the sentence type and end mark for: 'Open the window about three inches.'",
+            o: ["Declarative / Period", "Imperative / Period", "Interrogative / Question Mark", "Exclamatory / Exclamation Mark"],
+            a: 1,
+            e: "It is an imperative sentence (a command) without heavy emphasis, so it uses a period."
+        },
+        {
+            q: "6. Grammar: Identify the sentence type and end mark for: 'Wow! I hate math.'",
+            o: ["Interjection & Declarative", "Imperative & Exclamatory", "Interrogative & Declarative", "Declarative only"],
+            a: 0,
+            e: "'Wow!' is an interjection, and 'I hate math.' is a declarative statement."
+        },
+
+        // --- WRITING COMPOSITION (7-10) ---
+        {
+            q: "7. Writing Composition: What is the primary purpose of a 'Thesis Statement' in a multi-paragraph essay?",
+            o: ["To hook the reader's attention with a fun fact.", "To summarize the plot of the novel.", "To clearly state the main argument or point that the essay will prove.", "To provide a closing thought at the very end of the essay."],
+            a: 2,
+            e: "A thesis statement establishes the central argument or claim that the entire multi-paragraph essay will work to support and prove."
+        },
+        {
+            q: "8. Writing Composition: Which elements are typically required in the 'Introduction' of a literary analysis essay?",
+            o: ["A hook, background information (author/title/context), and a thesis statement.", "A restatement of the prompt and three quotes.", "A thesis statement and a concluding sentence.", "Body paragraphs and transition words."],
+            a: 0,
+            e: "An introduction generally starts broad with a hook, narrows down to provide necessary context about the text, and ends with a specific thesis statement."
+        },
+        {
+            q: "9. Writing Composition: What is the main function of the 'Conclusion' in a multi-paragraph essay?",
+            o: ["To introduce a brand new idea or argument.", "To restate the thesis in a new way, summarize main points, and provide a final thought or real-world connection.", "To list all the citations used in the essay.", "To provide a detailed summary of the book's ending."],
+            a: 1,
+            e: "A strong conclusion brings the essay to a satisfying close by re-emphasizing the thesis, summarizing the journey of the argument, and leaving the reader with a final, impactful thought."
+        },
+        {
+            q: "10. Writing Composition: Where is the thesis statement traditionally placed in a standard multi-paragraph essay?",
+            o: ["The very first sentence of the essay.", "The last sentence of the introduction paragraph.", "The first sentence of the conclusion paragraph.", "In the middle of the first body paragraph."],
+            a: 1,
+            e: "The thesis statement is typically placed at the very end of the introduction paragraph to smoothly transition into the body paragraphs."
+        },
+
+        // --- BOOK INFO & PLOT ELEMENTS (11-15) ---
+        {
+            q: "11. Book Info: What is the Point of View (POV) used in To Kill a Mockingbird?",
+            o: ["Third-person omniscient", "First-person, narrated by an older Scout looking back on her childhood.", "Second-person", "Third-person limited focusing on Atticus."],
+            a: 1,
+            e: "The novel is narrated in the first-person point of view by Jean Louise 'Scout' Finch as an adult reflecting on her past."
+        },
+        {
+            q: "12. Book Info: What is the definition of 'Exposition' in a story?",
+            o: ["The climax of the novel where the main conflict is resolved.", "The part of the story that gives introductory background information on characters, setting, and beginning of conflicts.", "The final paragraph of an essay.", "The use of figurative language to describe a setting."],
+            a: 1,
+            e: "Exposition is the part of the story that gives the introductory background information on characters, setting, and sometimes even the beginning of conflicts."
+        },
+        {
+            q: "13. Book Info: What is the exact setting of To Kill a Mockingbird?",
+            o: ["New York during the Roaring Twenties", "Maycomb, Alabama during the Great Depression", "Atlanta during the Civil War", "Chicago during the 1960s"],
+            a: 1,
+            e: "The story takes place in Maycomb, Alabama during the Great Depression."
+        },
+        {
+            q: "14. Book Info: Maycomb is described as 'a tired old town'. Why is this significant to the plot?",
+            o: ["It shows Maycomb is slow-moving and traditional, explaining why people resist change and adhere to prejudice.", "It means everyone in town is elderly.", "It signifies that the town has no legal system.", "It shows the town is undergoing a rapid industrial revolution."],
+            a: 0,
+            e: "This shows that Maycomb is slow-moving and traditional, which helps explain why people are resistant to change and why social rules and prejudices strongly influence the characters’ lives."
+        },
+        {
+            q: "15. Plot Elements: Which event marks the true 'Climax' of the novel?",
+            o: ["Scout starting her first day of school.", "The fire at Miss Maudie's house.", "The jury delivering the guilty verdict for Tom Robinson.", "Bob Ewell attacking Jem and Scout on Halloween night."],
+            a: 3,
+            e: "While the trial is the emotional peak for the town, the narrative climax where the main conflicts collide and resolve is Bob Ewell's attack on the children and Boo Radley's rescue."
+        },
+
+        // --- CHARACTERS & CHARACTERIZATION (16-35) ---
+        {
+            q: "16. Characterization: What is 'Indirect Characterization'?",
+            o: ["When the author directly tells the reader what the character is like.", "When the author gives information and allows the reader to draw their own conclusions about a character.", "When the character introduces themselves in the first person.", "When the narrator speaks to the reader directly."],
+            a: 1,
+            e: "Indirect Characterization is when the author gives information about a character and allows the reader to draw his or her own conclusions."
+        },
+        {
+            q: "17. Characterization: In Indirect Characterization, what does the acronym STEAL stand for?",
+            o: ["Setting, Tone, Emotion, Action, Literature", "Speech, Thoughts, Effect on others, Actions, Looks", "Style, Theme, Evidence, Analysis, Logic", "Sympathy, Trust, Empathy, Anger, Love"],
+            a: 1,
+            e: "The ways that we can learn about a character are: Speech, Thoughts, Effect on others, Actions, Looks."
+        },
+        {
+            q: "18. Characters: Who was Simon Finch?",
+            o: ["The sheriff of Maycomb.", "The first Finch in Maycomb, a fur-trapping apothecary from England.", "The prosecuting attorney in the Robinson case.", "The original owner of the Radley place."],
+            a: 1,
+            e: "Simon Finch was the first Finch in Maycomb, a 'fur-trapping apothecary from England who made his fortune practicing medicine'."
+        },
+        {
+            q: "19. Characters: How does Jem mature throughout the novel?",
+            o: ["He becomes a lawyer like his father.", "He matures as he learns the world is unfair, realizing it's like being a caterpillar in a cocoon.", "He decides to run away to Montgomery.", "He refuses to grow up and acts like Dill."],
+            a: 1,
+            e: "Jem matures as he learns the world is unfair. He states, 'It’s like bein’ a caterpillar in a cocoon.'"
+        },
+        {
+            q: "20. Characters: What is Calpurnia's primary role in the novel?",
+            o: ["The neighborhood gossip.", "The town sheriff.", "The Finch family housekeeper who bridges Black and white communities.", "Dill's aunt."],
+            a: 2,
+            e: "Calpurnia is the Finch family housekeeper and mother figure. She is strict but caring, and bridges Black and white communities."
+        },
+        {
+            q: "21. Characters: Which character is 'misunderstood by the town' but 'secretly kind and protective'?",
+            o: ["Bob Ewell", "Boo Radley", "Dolphus Raymond", "Burris Ewell"],
+            a: 1,
+            e: "Boo Radley is the reclusive neighbor who is misunderstood by the town, but secretly kind and protective."
+        },
+        {
+            q: "22. Characters: Who says 'I’m little but I’m old' and is known for being imaginative and sensitive to injustice?",
+            o: ["Dill Harris", "Walter Cunningham", "Jem Finch", "Scout Finch"],
+            a: 0,
+            e: "Dill Harris, Scout and Jem’s summer friend, is imaginative, playful, and sensitive to injustice."
+        },
+        {
+            q: "23. Characters: Miss Maudie Atkinson is best described as:",
+            o: ["A neighborhood gossip who loves drama.", "A strict, racist elderly neighbor.", "A wise, kind, and independent neighbor who treats the children with respect.", "A poor farmer who pays in goods."],
+            a: 2,
+            e: "She is a wise, kind, independent, and cheerful neighbor who treats Scout and Jem with respect and honesty."
+        },
+        {
+            q: "24. Characters: Who is Atticus describing when he says 'She was the bravest person I ever knew'?",
+            o: ["Miss Maudie", "Mrs. Henry Lafayette Dubose", "Calpurnia", "Scout"],
+            a: 1,
+            e: "He is describing Mrs. Dubose, an elderly neighbor who is secretly courageous as she fights addiction."
+        },
+        {
+            q: "25. Characters: Tom Robinson is best described as:",
+            o: ["A white man pretending to be drunk.", "A lazy, cruel man seeking revenge.", "An honest, hardworking Black man who is falsely accused and a victim of racial injustice.", "A wealthy landowner."],
+            a: 2,
+            e: "Tom is an honest, hardworking Black man who is falsely accused and a victim of racial injustice."
+        },
+        {
+            q: "26. Characters: Who ominously mutters, 'One down and about two more to go'?",
+            o: ["Bob Ewell", "Heck Tate", "Judge Taylor", "Tom Robinson"],
+            a: 0,
+            e: "Bob Ewell, Mayella's abusive father who is racist, cruel, and lazy, seeks revenge after the trial."
+        },
+        {
+            q: "27. Characters: Mayella Ewell's actions in court are primarily driven by:",
+            o: ["Her secret wealth.", "Her deep hatred for her father.", "Living in poverty and abuse, and lying in court out of fear/social pressure.", "Her desire to become famous in Maycomb."],
+            a: 2,
+            e: "Mayella is the lonely daughter of Bob Ewell who lives in poverty and abuse, and lies in court out of fear/social pressure."
+        },
+        {
+            q: "28. Characters: Heck Tate's role and defining trait is:",
+            o: ["The racist prosecutor.", "The sheriff of Maycomb who is practical and decent, and protects Boo Radley at the end.", "The newspaper editor who protects Tom.", "A poor farmer who refuses charity."],
+            a: 1,
+            e: "Heck Tate is the Sheriff of Maycomb. He is practical and decent, and protects Boo Radley at the end."
+        },
+        {
+            q: "29. Characters: Why does Dolphus Raymond pretend to be drunk?",
+            o: ["He is secretly addicted to alcohol.", "To give society an excuse for why he lives with a Black family, showing he understands hypocrisy deeply.", "To avoid going to court.", "To scare away the Ewells."],
+            a: 1,
+            e: "He pretends to be drunk to satisfy society because he lives with a Black family, demonstrating he understands hypocrisy deeply."
+        },
+        {
+            q: "30. Characters: Miss Stephanie Crawford is known as:",
+            o: ["The neighborhood gossip who loves rumors and drama.", "The strict first-grade teacher.", "The kind woman who bakes cakes.", "The fierce advocate for civil rights."],
+            a: 0,
+            e: "Miss Stephanie Crawford is the neighborhood gossip who loves rumors and drama, and often spreads stories about Boo Radley."
+        },
+        {
+            q: "31. Characters: Miss Rachel Haverford is:",
+            o: ["The racist neighbor.", "Dill's aunt, a neighbor of the Finches who is kind but sometimes dramatic.", "The judge's wife.", "The town librarian."],
+            a: 1,
+            e: "Miss Rachel Haverford is Dill's aunt and neighbor of the Finches. She is kind but sometimes dramatic."
+        },
+        {
+            q: "32. Characters: What does Walter Cunningham pouring syrup on his food reveal about him? (Indirect Characterization)",
+            o: ["He dislikes Scout's cooking.", "He is poor and not used to proper manners, but he is comfortable being himself.", "He is trying to make Jem laugh.", "He is wealthy and wastes food."],
+            a: 1,
+            e: "His action shows he is poor and not used to proper manners, but he is comfortable being himself."
+        },
+        {
+            q: "33. Characters: When Burris Ewell calls Miss Caroline a 'snot-nosed slut', what does this reveal? (Indirect Characterization)",
+            o: ["He is highly educated.", "He is rude, rebellious, and disrespectful.", "He is trying to impress the other students.", "He is secretly terrified of her."],
+            a: 1,
+            e: "His speech reveals he is rude, rebellious, and disrespectful."
+        },
+        {
+            q: "34. Characters: Who is Judge Taylor?",
+            o: ["The racist judge who wants Tom to hang without a trial.", "The seemingly sleepy but sharp judge who purposefully appoints Atticus to defend Tom Robinson to ensure a fair fight.", "The mayor of Maycomb.", "The man who runs the local newspaper."],
+            a: 1,
+            e: "Judge Taylor appears casual in court but is actually very perceptive, appointing Atticus because he knows Atticus is the only lawyer who would actually try to defend Tom."
+        },
+        {
+            q: "35. Characters: Miss Gates is highly critical of Adolf Hitler's persecution of the Jews. Why is this significant?",
+            o: ["It shows she is the most tolerant person in Maycomb.", "It highlights her hypocrisy, as she condemns prejudice abroad but exhibits racism toward Black people in her own town.", "It proves she wants to join the military.", "It demonstrates her deep understanding of history."],
+            a: 1,
+            e: "Miss Gates represents the blinding hypocrisy of Maycomb citizens who can recognize evil far away but fail to see their own racism at home."
+        },
+
+        // --- TOPIC VS THEME & CONTROVERSY (36-40) ---
+        {
+            q: "36. Theme: What is a 'Topic' in literature?",
+            o: ["A complete sentence about the author.", "The story's deeper meaning (the 'so what').", "What the story is about; an idea present in the text (the 'what'), usually one to two words.", "The physical setting of the novel."],
+            a: 2,
+            e: "A topic is 'what' the story is about, an idea present in the text, usually consisting of one to two words."
+        },
+        {
+            q: "37. Theme: What is a 'Theme Statement'?",
+            o: ["A one-word summary of the plot.", "A complete sentence that relates the story's deeper meaning to the real world without referencing the text, avoiding being preachy.", "A direct quote from the main character.", "The title of the chapter."],
+            a: 1,
+            e: "A theme is the story's deeper meaning (the 'so what'). It must be a complete sentence that relates to the real world and avoids being didactic."
+        },
+        {
+            q: "38. Controversy: What is the 'White Savior Narrative' in the context of TKAM?",
+            o: ["A story where a Black character saves a white family.", "A story that focuses more on how a white character grows and learns while 'saving' people of color, rather than showing their own agency.", "A historical event in Maycomb's past.", "A legal defense strategy used by Atticus."],
+            a: 1,
+            e: "The white savior narrative is when a story shows a white character 'saving' people of color, focusing more on the white character's growth and reinforcing unfair stereotypes."
+        },
+        {
+            q: "39. Controversy: Why is the novel criticized regarding 'Racist Language'?",
+            o: ["It uses too much modern slang.", "It includes repeated use of racial slurs and offensive language that can be harmful or upsetting.", "It censors historical facts.", "It avoids talking about race completely."],
+            a: 1,
+            e: "The novel includes repeated use of racial slurs to reflect the racism of the time, which can be harmful or upsetting in classrooms."
+        },
+        {
+            q: "40. Controversy: Despite the controversy, why do many people still value teaching the book? (Balanced View)",
+            o: ["Because it is very short.", "Because it teaches empathy, courage, and the importance of standing against injustice.", "Because it focuses only on happy events.", "Because it is required by state law."],
+            a: 1,
+            e: "Many value the book because it teaches empathy, courage, and the importance of standing against injustice."
+        },
+
+        // --- LITERARY DEVICES & FIGURATIVE LANGUAGE DEFINITIONS (41-50) ---
+        {
+            q: "41. Lit Devices: The mockingbird is used throughout the novel to represent innocence that is destroyed by evil. What literary device is this?",
+            o: ["Foreshadowing", "Irony", "Symbolism", "Flashback"],
+            a: 2,
+            e: "Symbolism is using an object or animal (the mockingbird) to represent a deeper, abstract idea (innocence)."
+        },
+        {
+            q: "42. Lit Devices: The entire narrative structure of To Kill a Mockingbird is essentially an older Scout looking back to explain how Jem broke his arm. What literary device is this?",
+            o: ["Foreshadowing", "Flashback", "Irony", "Allusion"],
+            a: 1,
+            e: "A flashback interrupts the chronological sequence of a narrative to relate an event that happened at an earlier time."
+        },
+        {
+            q: "43. Lit Devices: Bob Ewell's threats to Atticus after the trial, warning that he will get him back, are an example of which literary device?",
+            o: ["Symbolism", "Foreshadowing", "Personification", "Theme"],
+            a: 1,
+            e: "Foreshadowing is a literary device in which a writer gives an advance hint of what is to come later in the story (his attack on the children)."
+        },
+        {
+            q: "44. Lit Devices: When the author references real-world historical figures like Franklin D. Roosevelt or Adolf Hitler to establish context, what is this called?",
+            o: ["Symbolism", "Allusion", "Irony", "Hyperbole"],
+            a: 1,
+            e: "An allusion is a brief and indirect reference to a person, place, thing, or idea of historical, cultural, literary, or political significance."
+        },
+        {
+            q: "45. Lit Devices: Harper Lee uses the trial to highlight the flaws, prejudices, and hypocrisy of the 1930s Southern justice system. This is best described as:",
+            o: ["Social commentary/criticism", "Flashback", "Foreshadowing", "Simile"],
+            a: 0,
+            e: "Social commentary is the act of using rhetorical means to provide commentary on issues in a society, often done with the idea of implementing or promoting change."
+        },
+        {
+            q: "46. Fig Language: What is a 'Metaphor'?",
+            o: ["A comparison made using 'like' or 'as'.", "Giving human qualities to non-human objects.", "Greatly exaggerating something for emphasis.", "A comparison, based upon similarity, of two or more objects without using 'like' or 'as'."],
+            a: 3,
+            e: "A metaphor is a comparison, based upon similarity or resemblance, of two or more objects (e.g., 'The pillow was a cloud.')."
+        },
+        {
+            q: "47. Fig Language: What is a 'Simile'?",
+            o: ["A direct comparison using 'is'.", "A comparison made between two unlike objects, using the words 'like' or 'as'.", "An exaggeration.", "A type of sentence punctuation."],
+            a: 1,
+            e: "A simile is a comparison made between two unlike objects, using the words 'like' or 'as'."
+        },
+        {
+            q: "48. Fig Language: What is 'Personification'?",
+            o: ["Comparing two things using 'as'.", "Greatly exaggerating a fact.", "Giving human qualities or characteristics to non-human objects.", "Naming a character in a book."],
+            a: 2,
+            e: "Personification is giving human qualities or characteristics to non-human objects."
+        },
+        {
+            q: "49. Fig Language: What is 'Hyperbole'?",
+            o: ["A comparison without 'like'.", "Giving human traits to animals.", "Greatly exaggerating something for emphasis.", "A quiet, subtle hint."],
+            a: 2,
+            e: "Hyperbole is greatly exaggerating something for emphasis (e.g., 'I died when I saw my test score')."
+        },
+        {
+            q: "50. Fig Language: 'The Governor was eager to scrape a few barnacles off the ship of state...' What figure of speech is this?",
+            o: ["Metaphor", "Simile", "Personification", "Hyperbole"],
+            a: 0,
+            e: "It is a metaphor. Lee compares the business of the government to barnacles attaching themselves to a ship."
+        },
+
+        // --- FIGURATIVE LANGUAGE EXAMPLES (51-57) ---
+        {
+            q: "51. Fig Language: 'She had put so much starch in my dress it came up like a tent when I sat down.' What figure of speech is this?",
+            o: ["Metaphor", "Hyperbole", "Personification", "Simile"],
+            a: 3,
+            e: "It is a simile. Lee compared the dress to a tent using 'like', meaning it was extremely rigid and uncomfortable."
+        },
+        {
+            q: "52. Fig Language: '...Reverend Sykes intended to sweat the amount due out of his flock.' What figure of speech is 'flock' here?",
+            o: ["Simile", "Metaphor", "Personification", "Hyperbole"],
+            a: 1,
+            e: "It is a metaphor. Lee compares the people in the church to a flock (of sheep)."
+        },
+        {
+            q: "53. Fig Language: 'Calpurnia, in her navy voile dress and tub of a hat...' What figure of speech is 'tub of a hat'?",
+            o: ["Simile", "Personification", "Metaphor", "Hyperbole"],
+            a: 2,
+            e: "It is a metaphor. Lee compares her hat to a tub to show it was large, round, and bulky."
+        },
+        {
+            q: "54. Fig Language: 'Aunt Alexandra was sitting in a rocking chair exactly as if she had sat there every day of her life.' What figure of speech is this?",
+            o: ["Hyperbole", "Simile", "Personification", "Metaphor"],
+            a: 0,
+            e: "It is a hyperbole. Lee exaggerates the time she has been sitting there to emphasize how natural and comfortable she seemed."
+        },
+        {
+            q: "55. Fig Language: '...its courthouse proud, its streets graciously wide.' What figure of speech is this?",
+            o: ["Personification", "Simile", "Hyperbole", "Metaphor"],
+            a: 0,
+            e: "It is personification. The courthouse is given the human quality of being 'proud' and streets 'gracious'."
+        },
+        {
+            q: "56. Fig Language: 'Aunt Alexandra was standing stiff as a stork.' What figure of speech is this?",
+            o: ["Metaphor", "Personification", "Hyperbole", "Simile"],
+            a: 3,
+            e: "It is a simile. She is compared to a stork using 'as' to show she was tall, rigid, and formal."
+        },
+        {
+            q: "57. Fig Language: 'The blood in my legs began to flow again...' What figure of speech is this?",
+            o: ["Simile", "Personification", "Hyperbole", "Metaphor"],
+            a: 2,
+            e: "It is hyperbole. It exaggerates the physical feeling of numbness to emphasize relief and movement returning."
+        },
+
+        // --- QUOTES (58-66) ---
+        {
+            q: "58. Quotes: Jem says: 'shut your trap or go home—I declare to the Lord you're gettin' more like a girl every day!' What is the hidden meaning?",
+            o: ["Jem wants Scout to be a proper southern belle.", "Jem actually likes girls.", "On the surface, he's telling her to be quiet, but the deeper meaning is about gender stereotypes.", "Jem is quoting Atticus."],
+            a: 2,
+            e: "On the surface, he is telling Scout to be quiet. But the deeper meaning is about gender and how Jem is adopting adult attitudes."
+        },
+        {
+            q: "59. Quotes: What does Jem's 'more like a girl' quote teach us about the story's themes?",
+            o: ["That boys are always mean to sisters.", "That society’s rules (about gender, behavior) can be limiting and unfair, and children absorb these stereotypes.", "That Scout needs to change her clothes.", "That Maycomb has good schools."],
+            a: 1,
+            e: "It highlights Scout’s struggle with gender roles and introduces the theme that society's rules are unfair and children learn or question them."
+        },
+        {
+            q: "60. Quotes: Miss Maudie says: 'Grieving, child? Why, I hated that old cow barn... I’ll have the finest yard in Alabama.' What is the hidden meaning?",
+            o: ["She started the fire on purpose.", "She was rich and could afford many houses.", "Instead of focusing on loss, she chooses optimism, strength, and resilience.", "She hated Scout's house."],
+            a: 2,
+            e: "The deeper meaning is about strength, optimism, and resilience. Instead of focusing on loss, she chooses to focus on the future."
+        },
+        {
+            q: "61. Quotes: Atticus says: 'When a child asks you something, answer him... evasion simply muddles 'em.' What is the hidden meaning?",
+            o: ["Children are too dumb to understand adults.", "Adults should always lie to children to protect them.", "Adults should answer honestly and directly because children are perceptive and avoiding the truth only confuses them.", "Teachers should not evade questions in class."],
+            a: 2,
+            e: "He believes kids are perceptive; evading the truth only confuses them. Adults should answer honestly and directly."
+        },
+        {
+            q: "62. Quotes: Atticus says: 'nigger-lover is just one of those terms that don't mean anything... ignorant, trashy people use it...' What is the hidden meaning?",
+            o: ["The word is historically accurate and should be used.", "Racism comes from weakness, fear, and lack of education; insults only have power if you believe them.", "Scout should punch whoever says it.", "It is a compliment in Maycomb."],
+            a: 1,
+            e: "He meant that insults only have power if you believe them. Racism comes from weakness, fear, and a lack of education."
+        },
+        {
+            q: "63. Quotes: What does Atticus's explanation of the racist insult teach us about the story?",
+            o: ["Prejudice harms society, but courage and moral integrity can fight against it.", "Lawyers always win arguments.", "People in Maycomb are mostly highly educated.", "Scout is immune to insults."],
+            a: 0,
+            e: "It teaches a main theme: prejudice harms society, but courage and moral integrity can fight against it. Atticus is a moral role model."
+        },
+        {
+            q: "64. Quotes: Who teaches Scout that 'You never really understand a person until you climb into his skin and walk around in it'?",
+            o: ["Miss Maudie", "Calpurnia", "Atticus", "Heck Tate"],
+            a: 2,
+            e: "Atticus Finch is the honest and wise lawyer who teaches Scout about empathy with this quote."
+        },
+        {
+            q: "65. Quotes: Which character says: 'I think there’s just one kind of folks. Folks.'",
+            o: ["Jem", "Scout", "Atticus", "Tom Robinson"],
+            a: 1,
+            e: "Scout says, 'I think there’s just one kind of folks. Folks.'"
+        },
+        {
+            q: "66. Quotes: Who says 'Let the dead bury the dead' to protect Boo Radley?",
+            o: ["Atticus Finch", "Heck Tate", "Dolphus Raymond", "Miss Rachel"],
+            a: 1,
+            e: "Heck Tate, the practical and decent sheriff of Maycomb, says this to protect Boo from the public."
+        },
+
+        // --- ATTICUS CLOSING ARGUMENT RHETORIC (67-70) ---
+        {
+            q: "67. Rhetoric: In his closing argument, when Atticus relies on his own impeccable reputation for honesty and integrity to make the jury trust his words, which rhetorical appeal is he primarily using?",
+            o: ["Logos", "Pathos", "Ethos", "Hyperbole"],
+            a: 2,
+            e: "Ethos is an appeal to ethics, credibility, and character. Atticus leverages his established moral standing in the town to build trust."
+        },
+        {
+            q: "68. Rhetoric: Atticus points out the physical evidence: Mayella was beaten on the right side of her face, meaning a left-handed person (like Bob Ewell) did it, while Tom Robinson's left arm is crippled. Which rhetorical appeal is this?",
+            o: ["Pathos", "Ethos", "Logos", "Personification"],
+            a: 2,
+            e: "Logos is an appeal to logic and reason. Atticus uses undeniable physical evidence and deduction to prove Tom's physical inability to commit the crime."
+        },
+        {
+            q: "69. Rhetoric: When Atticus begs the jury to look past their societal prejudice and evokes pity for the terrifying injustice Tom faces simply because of the color of his skin, which rhetorical appeal is he using?",
+            o: ["Pathos", "Logos", "Ethos", "Simile"],
+            a: 0,
+            e: "Pathos is an appeal to emotion. Atticus tries to awaken the jury's humanity, compassion, and conscience."
+        },
+        {
+            q: "70. Rhetoric: In his final plea, Atticus famously states, 'In this country our courts are the great levelers, and in our courts all men are created equal.' What is the rhetorical purpose of this statement?",
+            o: ["To threaten the jury with federal law.", "To remind the jury that regardless of society's racial prejudices outside the courthouse, the law demands objective equality inside it.", "To prove that he is a better man than Bob Ewell.", "To mock the United States Constitution."],
+            a: 1,
+            e: "Atticus uses this powerful rhetoric to elevate the duty of the jury above their personal prejudices, arguing that the justice system must remain the ultimate equalizer."
+        }
+    ];
+
+    // 状态追踪
+    let answeredCount = 0;
+    let score = 0;
+    const answeredStates = new Array(qData.length).fill(false);
+
+    // DOM 元素
+    const container = document.getElementById('questions-container');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const scoreText = document.getElementById('score-text');
+    const scoreScreen = document.getElementById('score-screen');
+    const finalScoreText = document.getElementById('final-score-text');
+
+    // 渲染所有题目
+    function renderQuestions() {
+        qData.forEach((q, qIndex) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.id = `q-card-${qIndex}`;
+
+            const title = document.createElement('div');
+            title.className = 'question-title';
+            title.textContent = q.q;
+            card.appendChild(title);
+
+            const optionsList = document.createElement('ul');
+            optionsList.className = 'options-list';
+            optionsList.id = `q-opts-${qIndex}`;
+
+            q.o.forEach((optText, optIndex) => {
+                const li = document.createElement('li');
+                li.className = 'option';
+                li.textContent = optText;
+                li.onclick = () => handleOptionClick(qIndex, optIndex, li);
+                optionsList.appendChild(li);
+            });
+
+            card.appendChild(optionsList);
+
+            const expBox = document.createElement('div');
+            expBox.className = 'explanation-box';
+            expBox.id = `q-exp-${qIndex}`;
+            expBox.innerHTML = `<strong>💡 Explanation:</strong> ${q.e}`;
+            card.appendChild(expBox);
+
+            container.appendChild(card);
+        });
+    }
+
+    // 处理点击事件
+    function handleOptionClick(qIndex, optIndex, clickedElement) {
+        // 防止重复作答
+        if (answeredStates[qIndex]) return;
+        
+        answeredStates[qIndex] = true;
+        answeredCount++;
+        
+        const q = qData[qIndex];
+        const optionsList = document.getElementById(`q-opts-${qIndex}`).children;
+        const expBox = document.getElementById(`q-exp-${qIndex}`);
+
+        // 禁用当前题目的所有选项，并淡化未被选中且非正确答案的选项
+        for (let i = 0; i < optionsList.length; i++) {
+            optionsList[i].classList.add('disabled');
+            if (i !== optIndex && i !== q.a) {
+                optionsList[i].classList.add('faded');
+            }
+        }
+
+        // 判分逻辑
+        if (optIndex === q.a) {
+            clickedElement.classList.add('correct');
+            score++;
+        } else {
+            clickedElement.classList.add('wrong');
+            // 高亮正确答案
+            optionsList[q.a].classList.add('correct');
+        }
+
+        // 展开解析
+        expBox.style.display = 'block';
+
+        // 更新顶部状态栏
+        updateStatus();
+    }
+
+    function updateStatus() {
+        progressText.textContent = `Progress: ${answeredCount} / ${qData.length}`;
+        scoreText.textContent = `Score: ${score}`;
+        const percentage = (answeredCount / qData.length) * 100;
+        progressBar.style.width = `${percentage}%`;
+
+        // 如果全部答完，展示底部的完卷总结
+        if (answeredCount === qData.length) {
+            showFinalScore();
+        }
+    }
+
+    function showFinalScore() {
+        scoreScreen.style.display = 'block';
+        const finalPercentage = Math.round((score / qData.length) * 100);
+        
+        let msg = "";
+        if(finalPercentage >= 90) msg = "Fantastic work! You are absolutely ready to ace this final. Incredible focus!";
+        else if (finalPercentage >= 75) msg = "Great job! Review the minor details in the explanations and you'll be golden.";
+        else msg = "Good effort! Go back over the explanations to lock down those deeper concepts, especially Quotes and Rhetoric.";
+        
+        finalScoreText.innerHTML = `Your Final Score: <strong>${score} out of ${qData.length}</strong> (${finalPercentage}%).<br><br>${msg}`;
+        
+        // 平滑滚动到底部
+        setTimeout(() => {
+            scoreScreen.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 500);
+    }
+
+    // 初始化页面
+    renderQuestions();
+</script>
+
+</body>
+</html>
